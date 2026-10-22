@@ -59,7 +59,9 @@ function Install-Dictador {
     Expand-Archive $zip -DestinationPath $tmp
     $src = Get-ChildItem $tmp -Directory | Select-Object -First 1
     New-Item -ItemType Directory -Path $installDir -Force | Out-Null
-    Copy-Item (Join-Path $src.FullName "*.py"), (Join-Path $src.FullName "requirements.txt") $installDir -Force
+    Remove-Item (Join-Path $installDir "test_*.py") -ErrorAction SilentlyContinue  # left by older installers
+    Copy-Item (Join-Path $src.FullName "*.py") $installDir -Exclude "test_*" -Force
+    Copy-Item (Join-Path $src.FullName "requirements.txt") $installDir -Force
     Remove-Item $tmp -Recurse -Force
 
     Write-Host "[3/5] Instalando Python y dependencias..."
