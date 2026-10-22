@@ -20,15 +20,16 @@ import pyperclip
 import pystray
 import sounddevice as sd
 
+from config import load_config
 from icon import make_icon
 from text import clean_transcript
 
 HOTKEY = "ctrl+alt+space"
-MODEL_SIZE = "small"  # "base" is faster, "medium" is more accurate
 LANGUAGE = "es"
-BEAM_SIZE = 1  # 1 = greedy (fastest); 5 explores more candidates for higher accuracy
+BEAM_SIZE = 3  # 1 = greedy (fastest); higher explores more candidates for accuracy
 SAMPLE_RATE = 16000  # Whisper expects 16 kHz mono audio
 LOG_FILE = Path(__file__).with_name("dictado.log")
+CONFIG_FILE = Path(__file__).with_name("config.json")
 
 handlers = [logging.FileHandler(LOG_FILE, encoding="utf-8")]
 if sys.stdout is not None:  # None when launched with pythonw.exe (no console)
@@ -121,15 +122,15 @@ class Dictation:
 
 
 TITLES = {
-    "loading": "Dictado: cargando modelo...",
-    "idle": f"Dictado: listo ({HOTKEY})",
-    "recording": "Dictado: grabando...",
-    "paused": "Dictado: en pausa",
+    "loading": "Dictador: cargando modelo...",
+    "idle": f"Dictador: listo ({HOTKEY})",
+    "recording": "Dictador: grabando...",
+    "paused": "Dictador: en pausa",
 }
 
 
 def main():
-    tray = pystray.Icon("dictado", make_icon("loading"), TITLES["loading"])
+    tray = pystray.Icon("dictador", make_icon("loading"), TITLES["loading"])
 
     def show_state(state):
         tray.icon = make_icon(state)
@@ -142,8 +143,9 @@ def main():
         try:
             from faster_whisper import WhisperModel  # slow import, keep it off the startup path
 
-            log.info(f"Cargando modelo '{MODEL_SIZE}' (la primera vez lo descarga)...")
-            dictation.model = WhisperModel(MODEL_SIZE, device="cpu", compute_type="int8")
+            model_size = load_config(CONFIG_FILE)["model"]
+            log.info(f"Cargando modelo '{model_size}' (la primera vez lo descarga)...")
+            dictation.model = WhisperModel(model_size, device="cpu", compute_type="int8")
             log.info("Micrófono: %s", sd.query_devices(kind="input")["name"])
             keyboard.add_hotkey(HOTKEY, dictation.toggle)
             show_state("idle")
