@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+.pytest_cache/
+dictado.log
+odd/
+run.out
+config.json
